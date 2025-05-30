@@ -14,10 +14,10 @@ async def connect():
         RobotClient: An authenticated client connected to the robot.
     """
     opts = RobotClient.Options.with_api_key( 
-        api_key='4senjjiic57hsfzctbcdxovdkipfxnn3',
-        api_key_id='d2cffcf0-1ecc-4acb-8766-42901583b021'
+        api_key='MY-API-KEY',
+        api_key_id='MY-KEY-ID'
     )
-    return await RobotClient.at_address('david-macbook-main.biltvaaq0s.viam.cloud', opts)
+    return await RobotClient.at_address('MY-ROBOT-ADDRESS', opts)
 
 async def main():
     """
