@@ -1,27 +1,40 @@
+# sensor-pd/src/models/pdetect.py
+#Importing the necessary typing libraries for the Pdetect sensor class
 from typing import (Any, ClassVar, Dict, Final, List, Mapping, Optional,
                     Sequence, Tuple)
-
+#Importing the typing_extensions library for the Self type
 from typing_extensions import Self
+#Importing the Viam SDK components for Sensor, ComponentConfig, Geometry, ResourceName, ResourceBase, Model, ModelFamily, SensorReading, ValueTypes, Vision, and VisionClient
 from viam.components.sensor import Sensor
 from viam.proto.app.robot import ComponentConfig
-from viam.proto.common import Geometry, ResourceName
+from viam.proto.common import ResourceName
 from viam.resource.base import ResourceBase
 from viam.resource.types import Model, ModelFamily
-from viam.utils import SensorReading, ValueTypes
+from viam.utils import ValueTypes
 from viam.resource.easy_resource import EasyResource
-
 from viam.services.vision import Vision
 from viam.services.vision import VisionClient
 
+#Defining the Pdetect sensor class that inherits from the Sensor and EasyResource classes
 class Pdetect(Sensor, EasyResource):
     # To enable debug-level logging, either run viam-server with the --debug option,
     # or configure your resource/machine to display debug logs.
     MODEL: ClassVar[Model] = Model(ModelFamily("dl-org", "sensor-pd"), "pdetect")
 
+    #Initializing the Pdetect sensor instance
     def __init__(self, name: str):
+        """
+        Initialize a new Pdetect sensor instance.
+
+        Args:
+            name (str): The name of the sensor.
+        """
+        #Initializing the superclass (Sensor) with the name of the sensor
         super().__init__(name)
+        #Initializing the vision attribute as an optional VisionClient
         self.vision: Optional[VisionClient] = None
 
+    #Defining the new method that instantiates a new Pdetect sensor instance and configures it with the given settings
     @classmethod
     def new(
         cls, config: ComponentConfig, dependencies: Mapping[ResourceName, ResourceBase]
@@ -36,10 +49,13 @@ class Pdetect(Sensor, EasyResource):
         Returns:
             Self: A fully initialized instance of the Pdetect sensor.
         """
+        #Instantiating a new Pdetect sensor instance with the name of the sensor
         sensor = cls(config.name)
+        #Configuring the sensor with the given settings
         sensor.reconfigure(config, dependencies)
         return sensor
-
+    
+    #Defining the validate_config method that validates the configuration object received from the machine 
     @classmethod
     def validate_config(
         cls, config: ComponentConfig
@@ -56,8 +72,11 @@ class Pdetect(Sensor, EasyResource):
                 first element is a list of required dependencies (myPeopleDetector) and the
                 second element is a list of optional dependencies (empty in this case)
         """
+        #Checking if the camera_name attribute is present in the config
         if "camera_name" not in config.attributes.fields:
+            #If the camera_name attribute is not present, raise an exception
             raise Exception("Missing required attribute: camera_name")
+        #Returning the list of required dependencies (myPeopleDetector) and an empty list of optional dependencies
         return ["myPeopleDetector"], []
 
     def reconfigure(
@@ -69,16 +88,21 @@ class Pdetect(Sensor, EasyResource):
             config (ComponentConfig): The new configuration
             dependencies (Mapping[ResourceName, ResourceBase]): Any dependencies (both implicit and explicit)
         """
+        #Checking if the camera_name attribute is present in the config
         if not config.attributes or "camera_name" not in config.attributes.fields:
+            #If the camera_name attribute is not present, raise an exception
             raise ValueError("Missing required attribute: camera_name")
-            
+        #Setting the camera_name attribute to the value of the camera_name attribute in the config
         self.camera_name = str(config.attributes.fields["camera_name"].string_value)
-        
+        #Getting the vision resource from the dependencies
         vision_resource = dependencies.get(Vision.get_resource_name("myPeopleDetector"))
+        #Checking if the vision resource is present
         if not vision_resource:
+            #If the vision resource is not present, raise an exception
             raise ValueError("Required dependency 'myPeopleDetector' not found")
-            
+        #Setting the vision attribute to the vision resource
         self.vision = vision_resource
+        #Returning the result of the superclass (Sensor) reconfigure method
         return super().reconfigure(config, dependencies)
 
     async def get_readings(
@@ -105,7 +129,9 @@ class Pdetect(Sensor, EasyResource):
             Mapping[str, int]: A dictionary with the key `"person_detected"` 
             mapped to an integer with a value of 1 (detected) or 0 (not detected).
         """
+        #Executing the do_command method with an empty command
         result = await self.do_command({})
+        #Returning the result of the do_command method
         return {"person_detected": int(result["person_detected"])}
     
     async def do_command(
@@ -134,10 +160,15 @@ class Pdetect(Sensor, EasyResource):
                 - 1 if a person is detected
                 - 0 if no person is detected
         """
+        #Getting the detections from the camera using the vision resource
         detections = await self.vision.get_detections_from_camera(self.camera_name)
+        #Iterating through the detections
         for d in detections:
+            #Checking if the class name is "person" and the confidence is greater than 0.5
             if d.class_name.lower() == "person" and d.confidence > 0.5:
+                #Returning the result of the do_command method
                 return {"person_detected": 1}
+        #Returning the result of the do_command method
         return {"person_detected": 0}
 
 
