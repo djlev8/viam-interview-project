@@ -69,15 +69,29 @@ class Pdetect(Sensor, EasyResource):
 
         Returns:
             Tuple[Sequence[str], Sequence[str]]: A tuple where the
-                first element is a list of required dependencies (myPeopleDetector) and the
+                first element is a list of required dependencies (detector_name) and the
                 second element is a list of optional dependencies (empty in this case)
         """
+        req_deps = []
         #Checking if the camera_name attribute is present in the config
         if "camera_name" not in config.attributes.fields:
             #If the camera_name attribute is not present, raise an exception
             raise Exception("Missing required attribute: camera_name")
-        #Returning the list of required dependencies (myPeopleDetector) and an empty list of optional dependencies
-        return ["myPeopleDetector"], []
+        elif not config.attributes.fields["camera_name"].HasField("string_value"):
+            #If the camera_name attribute is not a string, raise an exception
+            raise Exception("camera_name must be a string")
+        if "detector_name" not in config.attributes.fields:
+            #If the detector_name attribute is not present, raise an exception
+            raise Exception("Missing required attribute: detector_name")
+        elif not config.attributes.fields["detector_name"].HasField("string_value"):
+            #If the detector_name attribute is not a string, raise an exception
+            raise Exception("detector_name must be a string")
+        
+        detector_name = config.attributes.fields["detector_name"].string_value
+        req_deps.append(detector_name)
+
+        #Returning the list of required dependencies  and an empty list of optional dependencies
+        return req_deps, []
 
     def reconfigure(
         self, config: ComponentConfig, dependencies: Mapping[ResourceName, ResourceBase]
@@ -88,20 +102,29 @@ class Pdetect(Sensor, EasyResource):
             config (ComponentConfig): The new configuration
             dependencies (Mapping[ResourceName, ResourceBase]): Any dependencies (both implicit and explicit)
         """
-        #Checking if the camera_name attribute is present in the config
-        if not config.attributes or "camera_name" not in config.attributes.fields:
-            #If the camera_name attribute is not present, raise an exception
-            raise ValueError("Missing required attribute: camera_name")
-        #Setting the camera_name attribute to the value of the camera_name attribute in the config
-        self.camera_name = str(config.attributes.fields["camera_name"].string_value)
-        #Getting the vision resource from the dependencies
-        vision_resource = dependencies.get(Vision.get_resource_name("myPeopleDetector"))
-        #Checking if the vision resource is present
+        fields = config.attributes.fields
+
+        # Validate and extract camera_name
+        if "camera_name" not in fields or not fields["camera_name"].HasField("string_value"):
+            raise ValueError("Missing or invalid 'camera_name' attribute")
+
+        # Validate and extract detector_name
+        if "detector_name" not in fields or not fields["detector_name"].HasField("string_value"):
+            raise ValueError("Missing or invalid 'detector_name' attribute")
+        detector_name = fields["detector_name"].string_value
+
+        # Lookup Vision service using user-provided detector_name
+        vision_resource = dependencies.get(Vision.get_resource_name(detector_name))
         if not vision_resource:
-            #If the vision resource is not present, raise an exception
-            raise ValueError("Required dependency 'myPeopleDetector' not found")
+            raise ValueError(f"Required Vision service '{detector_name}' not found")
+        
         #Setting the vision attribute to the vision resource
         self.vision = vision_resource
+
+        #Setting the camera_name attribute to the value of the camera_name attribute in the config 
+        # (to be used in the do_command method)
+        self.camera_name = fields["camera_name"].string_value
+
         #Returning the result of the superclass (Sensor) reconfigure method
         return super().reconfigure(config, dependencies)
 
@@ -144,7 +167,7 @@ class Pdetect(Sensor, EasyResource):
         """
         Execute a custom command to check for the presence of a person using the vision service.
 
-        This method queries the configured vision service (`myPeopleDetector`) for object
+        This method queries the configured vision service (`detector_name`) for object
         detections from the specified camera. If any detection is classified as a "person"
         with a confidence greater than 0.5, the method returns a result indicating a person
         was detected. Otherwise, it indicates no person was found.
