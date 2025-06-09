@@ -1,9 +1,8 @@
 # camera_vision/vision_service.py
 # Importing the asyncio library for asynchronous operations
 import asyncio
-# Importing the Viam SDK components for robot client, RPC dial, camera, MLModelClient, and VisionClient
+# Importing the Viam SDK components for robot client, camera, MLModelClient, and VisionClient
 from viam.robot.client import RobotClient
-from viam.rpc.dial import Credentials, DialOptions
 from viam.components.camera import Camera
 from viam.services.mlmodel import MLModelClient
 from viam.services.vision import VisionClient

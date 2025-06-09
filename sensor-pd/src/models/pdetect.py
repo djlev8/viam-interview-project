@@ -4,6 +4,8 @@ from typing import (Any, ClassVar, Dict, Final, List, Mapping, Optional,
                     Sequence, Tuple)
 #Importing the typing_extensions library for the Self type
 from typing_extensions import Self
+#Importing the cast function from the typing library
+from typing import cast
 #Importing the Viam SDK components for Sensor, ComponentConfig, Geometry, ResourceName, ResourceBase, Model, ModelFamily, SensorReading, ValueTypes, Vision, and VisionClient
 from viam.components.sensor import Sensor
 from viam.proto.app.robot import ComponentConfig
@@ -118,8 +120,8 @@ class Pdetect(Sensor, EasyResource):
         if not vision_resource:
             raise ValueError(f"Required Vision service '{detector_name}' not found")
         
-        #Setting the vision attribute to the vision resource
-        self.vision = vision_resource
+        #Setting the vision attribute to the vision resource (casting the vision resource to a VisionClient)
+        self.vision = cast(VisionClient, vision_resource)
 
         #Setting the camera_name attribute to the value of the camera_name attribute in the config 
         # (to be used in the do_command method)
