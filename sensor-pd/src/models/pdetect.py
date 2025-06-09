@@ -68,6 +68,9 @@ class Pdetect(Sensor, EasyResource):
 
         Args:
             config (ComponentConfig): The configuration for this resource
+        
+        Raises:
+            Exception: If the camera_name or detector_name attribute is missing or invalid.
 
         Returns:
             Tuple[Sequence[str], Sequence[str]]: A tuple where the
@@ -98,11 +101,25 @@ class Pdetect(Sensor, EasyResource):
     def reconfigure(
         self, config: ComponentConfig, dependencies: Mapping[ResourceName, ResourceBase]
     ):
-        """This method allows you to dynamically update your service when it receives a new `config` object.
+        """
+        Dynamically updates the sensor’s internal configuration and dependencies.
+
+        This method is called when the resource is initialized or its configuration 
+        is updated in the Viam app. It validates required configuration fields, 
+        retrieves the corresponding Vision service dependency, and stores both 
+        the detector and camera names for future use in detection.
 
         Args:
-            config (ComponentConfig): The new configuration
-            dependencies (Mapping[ResourceName, ResourceBase]): Any dependencies (both implicit and explicit)
+            config (ComponentConfig): The new configuration, including required attributes
+                'camera_name' (string) and 'detector_name' (string).
+            dependencies (Mapping[ResourceName, ResourceBase]): A map of resource dependencies,
+                expected to include the Vision service referenced by 'detector_name'.
+
+        Raises:
+            ValueError: If required fields are missing or the Vision service dependency is not found.
+
+        Returns:
+            Any: The result of the superclass Sensor's reconfigure() method.
         """
         fields = config.attributes.fields
 
