@@ -15,6 +15,7 @@ The following attribute template can be used to configure this model:
 ```json
 {
   "camera_name": "<string>"
+  "detector_name": "<string>"
 }
 ```
 
@@ -25,6 +26,7 @@ The following attributes are available for this model:
 | Name          | Type   | Inclusion | Description                                                |
 |---------------|--------|-----------|------------------------------------------------------------|
 | `camera_name` | string | Required  |The name of the camera resource to use for person detection.|
+| `detector_name` | string | Required  |The name of the detector to use for person detection.|
 |
 
 
@@ -33,6 +35,7 @@ The following attributes are available for this model:
 ```json
 {
   "camera_name": "cam"
+  "detector_name": "myPeopleDetector"
 }
 ```
 #### Dependencies
